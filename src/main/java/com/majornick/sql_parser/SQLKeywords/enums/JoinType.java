@@ -1,4 +1,4 @@
-package com.majornick.sql_parser.domain.enums;
+package com.majornick.sql_parser.SQLKeywords.enums;
 
 public enum JoinType {
     LEFT,
