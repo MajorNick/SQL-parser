@@ -3,6 +3,5 @@ package com.majornick.sql_parser.SQLKeywords;
 import lombok.Builder;
 
 @Builder
-public record Source(String tableName,String alias) {
-    
+public record Column(String columnName, String alias) {
 }

@@ -1,7 +1,13 @@
 package com.majornick.sql_parser.SQLKeywords;
 
 public interface KEYWORDS {
-    String[] KEYWORDS = {
-            "SELECT", "FROM", "WHERE", "AND", "OR", "JOIN", "ON", "AS", "ORDER", "BY", "GROUP", "HAVING", "INSERT", "INTO",
-            "VALUES", "UPDATE", "SET", "DELETE"};
+    String[] KEYWORDS = {"SELECT", "FROM", "WHERE", "AND", "OR", "JOIN",
+            "ON", "AS", "ORDER", "BY", "GROUP", "HAVING","NULL",
+            "LEFT", "RIGHT","INNER", "OUTER", "FULL", "CROSS"};
+
+    String[] MAIN_KEYWORDS = {
+        "SELECT", "WHERE","JOIN","ORDER","GROUP","HAVING","FROM"
+    };
+
+
 }

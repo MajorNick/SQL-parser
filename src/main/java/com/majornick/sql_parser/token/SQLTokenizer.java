@@ -1,6 +1,10 @@
 package com.majornick.sql_parser.token;
 
+import com.majornick.sql_parser.exceptions.NextTokenNotExistsException;
+
 import static com.majornick.sql_parser.SQLKeywords.KEYWORDS.KEYWORDS;
+import static com.majornick.sql_parser.SQLKeywords.KEYWORDS.MAIN_KEYWORDS;
+import static javax.lang.model.SourceVersion.isKeyword;
 
 public class SQLTokenizer {
 
@@ -40,7 +44,7 @@ public class SQLTokenizer {
             }
             String idString = identifier.toString();
             TokenType type = TokenType.IDENTIFIER;
-            if (isKeyword(idString)) {
+            if (isSQLKeyword(idString)) {
                 type = TokenType.KEYWORD;
             }
 
@@ -79,12 +83,25 @@ public class SQLTokenizer {
         advance();
         return currentToken;
     }
+    public TokenType nextTokenType() {
+        if(!hasNext()){
+            throw new NextTokenNotExistsException();
+        }
+        return nextToken.getType();
+    }
+    public String nextTokenValue() {
+        if(!hasNext()){
+            throw new NextTokenNotExistsException();
+        }
+        return nextToken.getValue();
+    }
 
     public boolean hasNext() {
         return nextToken != null;
     }
 
-    private static boolean isKeyword(String word) {
+
+    private static boolean isSQLKeyword(String word) {
         for (String keyword : KEYWORDS) {
             if (keyword.equalsIgnoreCase(word)) {
                 return true;
@@ -92,6 +109,15 @@ public class SQLTokenizer {
         }
         return false;
     }
+    public static boolean isMainSQLKeyword(String word) {
+        for (String keyword : MAIN_KEYWORDS) {
+            if (keyword.equalsIgnoreCase(word)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private static boolean isOperator(char c) {
         return "=<>!+-*/(),;".indexOf(c) != -1;
