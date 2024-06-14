@@ -1,8 +1,10 @@
 package com.majornick.sql_parser.token;
 
 import com.majornick.sql_parser.SQLKeywords.Column;
+import com.majornick.sql_parser.SQLKeywords.Join;
 import com.majornick.sql_parser.SQLKeywords.Query;
 import com.majornick.sql_parser.SQLKeywords.Source;
+import com.majornick.sql_parser.SQLKeywords.enums.JoinType;
 import com.majornick.sql_parser.parser.SQLParser;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -57,7 +59,7 @@ class SQLTokenizerTest {
     @Test
     @SneakyThrows
     public void parseSimpleQueryTest() {
-        String q = "SELECT * FROM table;";
+        String q = "SELECT * FROM table";
         Query query = new Query();
         query.addSource(new Source("table",null));
         query.addColumn(new Column("*",null));
@@ -68,7 +70,7 @@ class SQLTokenizerTest {
     @Test
     @SneakyThrows
     public void parseSimpleQueryWithAliasesTest() {
-        String q = "SELECT col1 AS c1, col2 AS c2 FROM table t;";
+        String q = "SELECT col1 AS c1, col2 AS c2 FROM table t";
         Query query = new Query();
         query.addSource(new Source("table","t"));
         query.addColumn(new Column("col1","c1"));
@@ -76,5 +78,49 @@ class SQLTokenizerTest {
         SQLParser parser = new SQLParser(q);
         assertEquals(query,parser.parse());
     }
+    @Test
+    @SneakyThrows
+    public void parseSimpleQueryWithJoinClauseTest() {
+        String q = "SELECT col1 AS c1, col2 AS c2 FROM table1 " +
+                "JOIN table2  ON table1.id = table2.id;";
+        Query query = new Query();
+        query.addSource(new Source("table1",null));
+        query.addColumn(new Column("col1","c1"));
+        query.addColumn(new Column("col2","c2"));
+        query.addJoin(new Join(new Source("table2",null), JoinType.INNER,"table1.id=table2.id"));
+        SQLParser parser = new SQLParser(q);
+        assertEquals(query,parser.parse());
+    }
+
+    @Test
+    @SneakyThrows
+    public void parseQueryWithJoinClauseTest() {
+        String q = "SELECT col1 AS c1, col2 AS c2 FROM table1 t1 " +
+                "LEFT JOIN table2 t2 ON t1.id = t2.id;";
+        Query query = new Query();
+        query.addSource(new Source("table1","t1"));
+        query.addColumn(new Column("col1","c1"));
+        query.addColumn(new Column("col2","c2"));
+        query.addJoin(new Join(new Source("table2","t2"), JoinType.LEFT,"t1.id=t2.id"));
+        SQLParser parser = new SQLParser(q);
+        assertEquals(query,parser.parse());
+    }
+
+    @Test
+    @SneakyThrows
+    public void parseQueryWith2JoinClauseTest() {
+        String q = "SELECT col1 AS c1, col2 AS c2 FROM table1 t1 " +
+                "LEFT JOIN table2 t2 ON t1.id = t2.id " +
+                "RIGHT JOIN table3 t3 ON t3.id = t2.id";
+        Query query = new Query();
+        query.addSource(new Source("table1","t1"));
+        query.addColumn(new Column("col1","c1"));
+        query.addColumn(new Column("col2","c2"));
+        query.addJoin(new Join(new Source("table2","t2"), JoinType.LEFT,"t1.id=t2.id"));
+        query.addJoin(new Join(new Source("table3","t3"), JoinType.RIGHT,"t3.id=t2.id"));
+        SQLParser parser = new SQLParser(q);
+        assertEquals(query,parser.parse());
+    }
+
 
 }

@@ -38,7 +38,7 @@ public class SQLTokenizer {
         if (Character.isLetter(c) || c == '_') {
             StringBuilder identifier = new StringBuilder();
             while (pos < query.length() &&
-                    (Character.isLetterOrDigit(query.charAt(pos)) || query.charAt(pos) == '_')) {
+                    (Character.isLetterOrDigit(query.charAt(pos)) || query.charAt(pos) == '_' || query.charAt(pos) == '.')) {
                 identifier.append(query.charAt(pos));
                 pos++;
             }
@@ -120,6 +120,6 @@ public class SQLTokenizer {
 
 
     private static boolean isOperator(char c) {
-        return "=<>!+-*/(),;".indexOf(c) != -1;
+        return "=<>!+-*/(),;z".indexOf(c) != -1;
     }
 }

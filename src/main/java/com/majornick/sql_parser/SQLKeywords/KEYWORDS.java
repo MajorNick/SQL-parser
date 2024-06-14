@@ -6,8 +6,11 @@ public interface KEYWORDS {
             "LEFT", "RIGHT","INNER", "OUTER", "FULL", "CROSS"};
 
     String[] MAIN_KEYWORDS = {
-        "SELECT", "WHERE","JOIN","ORDER","GROUP","HAVING","FROM"
+        "SELECT", "WHERE","JOIN","ORDER","GROUP","HAVING","FROM",
+            "LEFT", "RIGHT","INNER", "OUTER", "FULL", "CROSS"
     };
+
+
 
 
 }
