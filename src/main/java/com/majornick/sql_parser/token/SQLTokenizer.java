@@ -2,9 +2,7 @@ package com.majornick.sql_parser.token;
 
 import com.majornick.sql_parser.exceptions.NextTokenNotExistsException;
 
-import static com.majornick.sql_parser.SQLKeywords.KEYWORDS.KEYWORDS;
-import static com.majornick.sql_parser.SQLKeywords.KEYWORDS.MAIN_KEYWORDS;
-import static javax.lang.model.SourceVersion.isKeyword;
+import static com.majornick.sql_parser.SQLKeywords.KEYWORDS.*;
 
 public class SQLTokenizer {
 
@@ -47,7 +45,9 @@ public class SQLTokenizer {
             if (isSQLKeyword(idString)) {
                 type = TokenType.KEYWORD;
             }
-
+            if(isLogicalOperator(idString)){
+                type = TokenType.LOGICAL_OPERATOR;
+            }
             nextToken = new Token(type, idString);
         } else if (Character.isDigit(c)) {
             StringBuilder number = new StringBuilder();
@@ -83,14 +83,16 @@ public class SQLTokenizer {
         advance();
         return currentToken;
     }
+
     public TokenType nextTokenType() {
-        if(!hasNext()){
+        if (!hasNext()) {
             throw new NextTokenNotExistsException();
         }
         return nextToken.getType();
     }
+
     public String nextTokenValue() {
-        if(!hasNext()){
+        if (!hasNext()) {
             throw new NextTokenNotExistsException();
         }
         return nextToken.getValue();
@@ -109,6 +111,7 @@ public class SQLTokenizer {
         }
         return false;
     }
+
     public static boolean isMainSQLKeyword(String word) {
         for (String keyword : MAIN_KEYWORDS) {
             if (keyword.equalsIgnoreCase(word)) {
@@ -117,9 +120,20 @@ public class SQLTokenizer {
         }
         return false;
     }
+    public static boolean isLogicalOperator(String s){
+        return "NULL".equalsIgnoreCase(s) || "OR".equalsIgnoreCase(s);
+    }
 
 
     private static boolean isOperator(char c) {
         return "=<>!+-*/(),;z".indexOf(c) != -1;
+    }
+    public static boolean isComparisonOperator(String c){
+        for (String keyword : COMPARISON_OPERATORS) {
+            if (keyword.equalsIgnoreCase(c)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

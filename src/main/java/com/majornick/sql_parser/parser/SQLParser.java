@@ -5,6 +5,7 @@ import com.majornick.sql_parser.SQLKeywords.Join;
 import com.majornick.sql_parser.SQLKeywords.Query;
 import com.majornick.sql_parser.SQLKeywords.Source;
 import com.majornick.sql_parser.SQLKeywords.enums.JoinType;
+import com.majornick.sql_parser.SQLKeywords.where.*;
 import com.majornick.sql_parser.exceptions.SQLKeywordExpectedException;
 import com.majornick.sql_parser.token.SQLTokenizer;
 import com.majornick.sql_parser.token.Token;
@@ -32,13 +33,14 @@ public class SQLParser {
         while (true) {
             if (!tokenizer.hasNext() || SQLTokenizer.isMainSQLKeyword(tokenizer.nextTokenValue())) {
 
-                String tok = currentlyParsing.pop();
+                String tok = currentlyParsing.pop().toUpperCase();
                 List<Token> curKeywordTokens = currentlyParsingTokenSeq.pop();
 
                 switch (tok) {
                     case "SELECT" -> parseSelectedColumns(query, curKeywordTokens);
                     case "FROM" -> parseSource(query, curKeywordTokens);
-                    case "JOIN" -> parseJoin(query,curKeywordTokens);
+                    case "JOIN" -> parseJoin(query, curKeywordTokens);
+                    case "WHERE" -> parseWhere(query, curKeywordTokens);
                 }
                 if (!tokenizer.hasNext()) break;
                 Token keyword = tokenizer.nextToken();
@@ -48,7 +50,7 @@ public class SQLParser {
                     currentlyParsingTokenSeq.push(new ArrayList<>());
                     currentlyParsingTokenSeq.peek().add(keyword);
                     currentlyParsing.push("JOIN");
-                }else{
+                } else {
                     currentlyParsing.push(keyword.getValue());
                 }
             } else {
@@ -60,6 +62,7 @@ public class SQLParser {
         }
         return query;
     }
+
 
     private void parseSelectedColumns(Query query, List<Token> curKeywordTokens) {
         var column = Column.builder();
@@ -96,30 +99,100 @@ public class SQLParser {
         }
         query.addSource(s.build());
     }
+
     private void parseJoin(Query query, List<Token> curKeywordTokens) {
         var jb = Join.builder();
 
-        int i =0;
-        if(JoinType.isJoinTypeKeyword(curKeywordTokens.get(0).getValue())){
+        int i = 0;
+        if (JoinType.isJoinTypeKeyword(curKeywordTokens.get(0).getValue())) {
             jb.joinType(JoinType.valueOf(curKeywordTokens.get(0).getValue()));
-            i=1;
-        }else{
+            i = 1;
+        } else {
             jb.joinType(JoinType.INNER);
         }
         var s = Source.builder();
         s.tableName(curKeywordTokens.get(i++).getValue());
-        if(curKeywordTokens.get(i).getType() == TokenType.IDENTIFIER){
+        if (curKeywordTokens.get(i).getType() == TokenType.IDENTIFIER) {
             s.alias(curKeywordTokens.get(i).getValue());
             i++;
         }
         jb.toSource(s.build());
         i++; // ON
-        var cb = new  StringBuilder();
-        while(i<curKeywordTokens.size() && !";".equals(curKeywordTokens.get(i).getValue())){
+        var cb = new StringBuilder();
+        while (i < curKeywordTokens.size() && !";".equals(curKeywordTokens.get(i).getValue())) {
             cb.append(curKeywordTokens.get(i++).getValue());
         }
         jb.condition(cb.toString());
         query.addJoin(jb.build());
+    }
+
+    private void parseWhere(Query query, List<Token> curKeywordTokens) {
+
+        Expression exp = parseExpression(curKeywordTokens);
+        System.out.println(exp);
+        query.setWhereClause(new WhereClause(exp));
+    }
+
+    private Expression parseExpression(List<Token> curKeywordTokens) {
+        Stack<Expression> expressionStack = new Stack<>();
+        Stack<String> operatorStack = new Stack<>();
+        int i = 0;
+        while (i < curKeywordTokens.size()) {
+            Token cur = curKeywordTokens.get(i);
+            if (cur.getType() == TokenType.STRING || cur.getType() == TokenType.IDENTIFIER || cur.getType() == TokenType.NUMBER) {
+                expressionStack.push(new SimpleExpression(cur.getValue()));
+            } else if (cur.getType() == TokenType.OPERATOR && "(".equals(cur.getValue())) {
+                operatorStack.push(cur.getValue());
+            } else if (cur.getType() == TokenType.OPERATOR && ")".equals(cur.getValue())) {
+                while (!operatorStack.isEmpty() && !operatorStack.peek().equals("(")) {
+                    processOperator(expressionStack, operatorStack.pop());
+                }
+                if (!operatorStack.isEmpty()) {
+                    operatorStack.pop();
+                }
+            } else if (cur.getType() == TokenType.OPERATOR && SQLTokenizer.isComparisonOperator(cur.getValue()) ) {
+                while (!operatorStack.isEmpty() && precedence(cur.getValue()) <= precedence(operatorStack.peek())) {
+                    processOperator(expressionStack, operatorStack.pop());
+                }
+                operatorStack.push(cur.getValue());
+            } else if (cur.getValue().equals("AND") || cur.getValue().equals("OR")) {
+                while (!operatorStack.isEmpty() && precedence(cur.getValue()) <= precedence(operatorStack.peek())) {
+                    processOperator(expressionStack, operatorStack.pop());
+                }
+                operatorStack.push(cur.getValue());
+            }
+            i++;
+        }
+        while (!operatorStack.isEmpty()) {
+            processOperator(expressionStack, operatorStack.pop());
+        }
+
+        return expressionStack.isEmpty() ? null : expressionStack.pop();
+    }
+
+    private int precedence(String operator) {
+        return switch (operator) {
+            case "OR" -> 1;
+            case "AND" -> 2;
+            case "=", ">", "<", ">=", "<=", "!=" -> 3;
+            default -> 0;
+        };
+    }
+
+    private void processOperator(Stack<Expression> expressionStack, String operator) {
+        if( expressionStack.size() == 1){
+            Expression main = expressionStack.pop();
+            expressionStack.push(new LogicalExpression(main,main,"AND"));
+        }
+        else if (operator.equals("AND") || operator.equals("OR") ) {
+            Expression right = expressionStack.pop();
+            Expression left = expressionStack.pop();
+            expressionStack.push(new LogicalExpression(left, right, operator));
+        } else {
+            Expression right = expressionStack.pop();
+            Expression left = expressionStack.pop();
+            expressionStack.push(new ComparisonExpression(left, right, operator));
+        }
     }
 
 
@@ -129,4 +202,5 @@ public class SQLParser {
         }
         tokenizer.nextToken();
     }
+
 }

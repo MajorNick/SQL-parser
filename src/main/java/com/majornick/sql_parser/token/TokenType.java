@@ -6,8 +6,7 @@ public enum TokenType {
     STRING,
     NUMBER,
     OPERATOR,
-    PUNCTUATION,
-    WHITESPACE,
+    LOGICAL_OPERATOR,
     UNKNOWN,
     END_OF_SQL_KEYWORD_STATEMENT;
 

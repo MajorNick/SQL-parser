@@ -80,7 +80,7 @@ class SQLTokenizerTest {
     }
     @Test
     @SneakyThrows
-    public void parseSimpleQueryWithJoinClauseTest() {
+    public void parseSimpleQueryWithJoinTest() {
         String q = "SELECT col1 AS c1, col2 AS c2 FROM table1 " +
                 "JOIN table2  ON table1.id = table2.id;";
         Query query = new Query();
@@ -94,7 +94,7 @@ class SQLTokenizerTest {
 
     @Test
     @SneakyThrows
-    public void parseQueryWithJoinClauseTest() {
+    public void parseQueryWithJoinTest() {
         String q = "SELECT col1 AS c1, col2 AS c2 FROM table1 t1 " +
                 "LEFT JOIN table2 t2 ON t1.id = t2.id;";
         Query query = new Query();
@@ -108,7 +108,7 @@ class SQLTokenizerTest {
 
     @Test
     @SneakyThrows
-    public void parseQueryWith2JoinClauseTest() {
+    public void parseQueryWith2JoinTest() {
         String q = "SELECT col1 AS c1, col2 AS c2 FROM table1 t1 " +
                 "LEFT JOIN table2 t2 ON t1.id = t2.id " +
                 "RIGHT JOIN table3 t3 ON t3.id = t2.id";
@@ -122,5 +122,16 @@ class SQLTokenizerTest {
         assertEquals(query,parser.parse());
     }
 
-
+    @Test
+    @SneakyThrows
+    public void parseSimpleQueryWithWhereClauseTest() {
+        String q = "SELECT col1 AS c1, col2 AS c2 FROM table t " +
+                "WHERE a>5;";
+        Query query = new Query();
+        query.addSource(new Source("table","t"));
+        query.addColumn(new Column("col1","c1"));
+        query.addColumn(new Column("col2","c2"));
+        SQLParser parser = new SQLParser(q);
+        assertEquals(query,parser.parse());
+    }
 }

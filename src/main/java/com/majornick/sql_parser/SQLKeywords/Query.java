@@ -1,5 +1,6 @@
 package com.majornick.sql_parser.SQLKeywords;
 
+import com.majornick.sql_parser.SQLKeywords.where.WhereClause;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -12,9 +13,10 @@ public class Query {
     private List<Column> columns;
     private List<Source> fromSources;
     private List<Join> joins;
-    private List<WhereClause> whereClauses;
     private List<String> groupByColumns;
     private List<Sort> sortColumns;
+    @Setter
+    private WhereClause whereClause;
     @Setter
     private Integer limit;
     @Setter
@@ -24,7 +26,6 @@ public class Query {
         columns = new ArrayList<>();
         fromSources = new ArrayList<>();
         joins = new ArrayList<>();
-        whereClauses = new ArrayList<>();
         groupByColumns = new ArrayList<>();
         sortColumns = new ArrayList<>();
     }
@@ -44,6 +45,4 @@ public class Query {
     public void addSort(Sort s){
         sortColumns.add(s);
     }
-
-
 }
