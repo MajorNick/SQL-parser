@@ -29,7 +29,7 @@ public class SQLParser {
         Query query = new Query();
         expectKeyword("SELECT");
         currentlyParsing.push("SELECT");
-        List<Token> list = new ArrayList<>();
+
         while (true) {
             if (!tokenizer.hasNext() || SQLTokenizer.isMainSQLKeyword(tokenizer.nextTokenValue())) {
 
@@ -41,6 +41,7 @@ public class SQLParser {
                     case "FROM" -> parseSource(query, curKeywordTokens);
                     case "JOIN" -> parseJoin(query, curKeywordTokens);
                     case "WHERE" -> parseWhere(query, curKeywordTokens);
+                    case "GROUP" -> parseGroup(query, curKeywordTokens);
                 }
                 if (!tokenizer.hasNext()) break;
                 Token keyword = tokenizer.nextToken();
@@ -127,9 +128,7 @@ public class SQLParser {
     }
 
     private void parseWhere(Query query, List<Token> curKeywordTokens) {
-
         Expression exp = parseExpression(curKeywordTokens);
-        System.out.println(exp);
         query.setWhereClause(new WhereClause(exp));
     }
 
@@ -150,7 +149,7 @@ public class SQLParser {
                 if (!operatorStack.isEmpty()) {
                     operatorStack.pop();
                 }
-            } else if (cur.getType() == TokenType.OPERATOR && SQLTokenizer.isComparisonOperator(cur.getValue()) ) {
+            } else if (cur.getType() == TokenType.OPERATOR && SQLTokenizer.isComparisonOperator(cur.getValue())) {
                 while (!operatorStack.isEmpty() && precedence(cur.getValue()) <= precedence(operatorStack.peek())) {
                     processOperator(expressionStack, operatorStack.pop());
                 }
@@ -170,6 +169,21 @@ public class SQLParser {
         return expressionStack.isEmpty() ? null : expressionStack.pop();
     }
 
+    private void parseGroup(Query query, List<Token> curKeywordTokens) {
+        for (int i = 1; i < curKeywordTokens.size(); i++) {
+            Token token = curKeywordTokens.get(i);
+
+            if (token.getType() == TokenType.IDENTIFIER) {
+                query.addGroupBy(token.getValue());
+                if (i + 1 < curKeywordTokens.size() && curKeywordTokens.get(i + 1).getType() == TokenType.STRING &&
+                        curKeywordTokens.get(i + 1).getValue().equals(",")) {
+                    i++;
+                }
+            }
+        }
+    }
+
+
     private int precedence(String operator) {
         return switch (operator) {
             case "OR" -> 1;
@@ -180,17 +194,11 @@ public class SQLParser {
     }
 
     private void processOperator(Stack<Expression> expressionStack, String operator) {
-        if( expressionStack.size() == 1){
-            Expression main = expressionStack.pop();
-            expressionStack.push(new LogicalExpression(main,main,"AND"));
-        }
-        else if (operator.equals("AND") || operator.equals("OR") ) {
-            Expression right = expressionStack.pop();
-            Expression left = expressionStack.pop();
+        Expression right = expressionStack.pop();
+        Expression left = expressionStack.pop();
+        if (operator.equals("AND") || operator.equals("OR")) {
             expressionStack.push(new LogicalExpression(left, right, operator));
         } else {
-            Expression right = expressionStack.pop();
-            Expression left = expressionStack.pop();
             expressionStack.push(new ComparisonExpression(left, right, operator));
         }
     }

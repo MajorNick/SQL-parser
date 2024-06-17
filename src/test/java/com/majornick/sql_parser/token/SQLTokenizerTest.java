@@ -5,6 +5,10 @@ import com.majornick.sql_parser.SQLKeywords.Join;
 import com.majornick.sql_parser.SQLKeywords.Query;
 import com.majornick.sql_parser.SQLKeywords.Source;
 import com.majornick.sql_parser.SQLKeywords.enums.JoinType;
+import com.majornick.sql_parser.SQLKeywords.where.ComparisonExpression;
+import com.majornick.sql_parser.SQLKeywords.where.LogicalExpression;
+import com.majornick.sql_parser.SQLKeywords.where.SimpleExpression;
+import com.majornick.sql_parser.SQLKeywords.where.WhereClause;
 import com.majornick.sql_parser.parser.SQLParser;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -131,7 +135,38 @@ class SQLTokenizerTest {
         query.addSource(new Source("table","t"));
         query.addColumn(new Column("col1","c1"));
         query.addColumn(new Column("col2","c2"));
+        WhereClause expectedWhereClause = new WhereClause(new ComparisonExpression(new SimpleExpression("a"),new SimpleExpression("5"),">"));
+        query.setWhereClause(expectedWhereClause);
         SQLParser parser = new SQLParser(q);
         assertEquals(query,parser.parse());
     }
+    @Test
+    @SneakyThrows
+    public void parseQueryWithWhereClauseTest() {
+        String q = "SELECT col1 AS c1, col2 AS c2 FROM table t " +
+                "WHERE c<25 AND (a>=5 OR b>7);";
+        Query query = new Query();
+        query.addSource(new Source("table","t"));
+        query.addColumn(new Column("col1","c1"));
+        query.addColumn(new Column("col2","c2"));
+        WhereClause expectedWhereClause = new WhereClause(new LogicalExpression(new ComparisonExpression(new SimpleExpression("c"),new SimpleExpression("25"),"<")
+                ,new LogicalExpression(new ComparisonExpression(new SimpleExpression("a"),new SimpleExpression("5"),">=")
+                                        ,new ComparisonExpression(new SimpleExpression("b"),new SimpleExpression("7"),">"),"OR"),"AND"));
+        query.setWhereClause(expectedWhereClause);
+        SQLParser parser = new SQLParser(q);
+        assertEquals(query,parser.parse());
+    }
+
+    @Test
+    @SneakyThrows
+    public void parseSimpleQueryWithGroupByTest() {
+        String q = "SELECT SUM(population) FROM table " +
+                    "GROUP By city_name;";
+        Query query = new Query();
+        query.addSource(new Source("table",null));
+        query.addColumn(new Column("*",null));
+        SQLParser parser = new SQLParser(q);
+        assertEquals(query,parser.parse());
+    }
+
 }

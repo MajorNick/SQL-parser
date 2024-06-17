@@ -70,7 +70,12 @@ public class SQLTokenizer {
             }
             nextToken = new Token(TokenType.STRING, literal.toString());
         } else if (isOperator(c)) {
-            nextToken = new Token(TokenType.OPERATOR, Character.toString(c));
+            String op = ""+c;
+            if(pos < query.length()-1&&(query.charAt(pos+1) == '=')){
+                op+="=";
+                pos++;
+            }
+            nextToken = new Token(TokenType.OPERATOR, op);
             pos++;
         } else {
             nextToken = new Token(TokenType.UNKNOWN, Character.toString(c));
@@ -121,7 +126,7 @@ public class SQLTokenizer {
         return false;
     }
     public static boolean isLogicalOperator(String s){
-        return "NULL".equalsIgnoreCase(s) || "OR".equalsIgnoreCase(s);
+        return "AND".equalsIgnoreCase(s) || "OR".equalsIgnoreCase(s);
     }
 
 
